@@ -121,13 +121,6 @@ public class UserService {
         }
     }
 
-    public String saveRefreshToken(String username) {
-        String refreshToken = generateRefreshtokenFromUsername(username);
-        User user = userRepository.findByUsername(username);
-        user.setRefreshToken(refreshToken);
-        userRepository.save(user);
-        return refreshToken;
-    }
 
     public TokenRefreshResponse getAccessTokenByRefreshToken(TokenRefreshRequest request) {
         DecodedJWT refreshJwt = JWT.decode(request.getRefreshToken());
