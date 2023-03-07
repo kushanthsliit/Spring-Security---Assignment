@@ -1,41 +1,52 @@
 package com.kushanthsliit.spring.security.controller;
 
-import com.kushanthsliit.spring.security.dto.JwtRequest;
-import com.kushanthsliit.spring.security.dto.JwtResponse;
-import com.kushanthsliit.spring.security.dto.TokenRefreshRequest;
-import com.kushanthsliit.spring.security.dto.TokenRefreshResponse;
+import com.kushanthsliit.spring.security.dto.*;
+import com.kushanthsliit.spring.security.entity.User;
 import com.kushanthsliit.spring.security.service.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/home")
+@CrossOrigin("http://localhost:4200")
 public class HomeController {
     @Autowired
     private UserService userService;
 
     @GetMapping("/welcome")
-    public String home(){
-        return "Welcome To The Application";
+    public ResponseEntity<ApiResponse<String>> home(){
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(),
+                "",
+                "Welcome to the Application"));
     }
 
     @PostMapping("/authenticate")
-    public JwtResponse authenticate(@RequestBody JwtRequest request) throws Exception {
-        return userService.authenticate(request);
+    public ResponseEntity<ApiResponse<JwtResponse>> authenticate(@RequestBody JwtRequest request) throws Exception {
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(),
+                "",
+                userService.authenticate(request)));
     }
 
     @PostMapping("/sendPasswordResetToken")
-    public String sentPasswordResetToken(@RequestParam String email){
+    public ResponseEntity<ApiResponse<String>> sentPasswordResetToken(@RequestParam String email){
         userService.sendPasswordResetToken(email);
-        return "Please check your email "+ email + " . We have sent a password reset OTP";
+        return ResponseEntity.ok(new ApiResponse<String>(HttpStatus.OK.value(), "", "Password Reset Token Was sent to "+ email));
+    }
+
+    @GetMapping("/verifyToken")
+    public ResponseEntity<ApiResponse<User>> verifyPasswordResetToken(@RequestParam String token){
+            return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(),
+                    "Password Reset Token Verified Successfully",
+                    userService.verifyPasswordResetToken(token)));
     }
 
     @PostMapping("/resetPassword")
-    public String resetPassword(@RequestParam String otp, @RequestParam String newPassword){
-        userService.updatePassword(otp, newPassword);
-        return "Password Updated Successfully..!";
+    public ResponseEntity<ApiResponse<String>> resetPassword(@RequestParam long userId, @RequestParam String newPassword){
+        userService.updatePassword(userId, newPassword);
+        return ResponseEntity.ok(new ApiResponse<>(HttpStatus.OK.value(), "","Password Updated Successfully..!"));
     }
 
     @PostMapping("/refreshToken")

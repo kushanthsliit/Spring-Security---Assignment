@@ -16,5 +16,6 @@ public class JwtResponse {
     private String tokenType;
     private String jwtToken;
     private String refreshToken;
+    private String loginType;
 
 }

@@ -23,12 +23,8 @@ import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 
-
-import java.time.Instant;
-import java.util.Base64;
 import java.util.Date;
 import java.util.Random;
-import java.util.UUID;
 
 @Service
 public class UserService {
@@ -60,19 +56,20 @@ public class UserService {
     public JwtResponse authenticate(JwtRequest request) throws Exception {
         final String token;
         final String refreshToken;
+        User user;
         try {
             authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.getUsername(), request.getPassword()));
             final UserDetails userDetails = userDetailsService.loadUserByUsername(request.getUsername());
             refreshToken = userService.generateRefreshtokenFromUsername(userDetails.getUsername());
             token = jwTutility.generateToken(userDetails);
-            User user = userRepository.findByUsername(userDetails.getUsername());
+            user = userRepository.findByUsername(userDetails.getUsername());
             user.setRefreshToken(refreshToken);
             userRepository.save(user);
         }
         catch (BadCredentialsException e){
             throw  new Exception("INVALID CREDENTIALS ", e);
         }
-        return new JwtResponse("Bearer",token, refreshToken);
+        return new JwtResponse("Bearer",token, refreshToken, user.getRole());
     }
 
     public void sendPasswordResetToken(String email) throws UsernameNotFoundException {
@@ -106,8 +103,8 @@ public class UserService {
     }
 
 
-    public void updatePassword(String token, String newPassword) {
-        User user = userRepository.findByPasswordResetToken(token);
+    public void updatePassword(Long userId, String newPassword) {
+        User user = userRepository.findById(userId).get();
         if(user != null){
             BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
             String encodedPassword = passwordEncoder.encode(newPassword);
@@ -148,5 +145,13 @@ public class UserService {
     public boolean verifyRefreshTokenExpiration(DecodedJWT refreshToken) {
         Date expireAt = refreshToken.getExpiresAt();
         return expireAt.before(new Date());
+    }
+
+    public User verifyPasswordResetToken(String token) {
+        User user = userRepository.findByPasswordResetToken(token);
+        if(user != null){
+            return user;
+        }
+        return null;
     }
 }
